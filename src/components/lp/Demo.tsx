@@ -1,12 +1,12 @@
 import { lazy, useEffect, useRef, useState } from 'react'
 import { COMMANDS, sleep } from '../../lib/demo'
 import { usePrefersReducedMotion } from '../../lib/hooks'
-import { audioDuration, speak } from '../../lib/voice'
+import { audioDuration, speak, voiceLevels } from '../../lib/voice'
 import type { VoicePhase } from '../three/HeroOrb'
 import { SceneMount } from '../three/SceneMount'
 import { OrbFallback } from './Icons'
 
-const MiniOrb = lazy(() => import('../three/MiniOrb'))
+const PlexusOrb = lazy(() => import('../three/PlexusOrb'))
 
 type State = { cmd: number; phase: VoicePhase | 'parado'; typed: number }
 
@@ -25,8 +25,12 @@ export function Demo() {
   const ctrl = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    // Já deixa as durações carregadas para a digitação acompanhar a fala desde o primeiro clique
-    for (const c of COMMANDS) if (c.audio) void audioDuration(c.audio)
+    // Já deixa durações e volumes carregados: digitação e orbe acompanham a fala desde o primeiro clique
+    for (const c of COMMANDS) {
+      if (!c.audio) continue
+      void audioDuration(c.audio)
+      void voiceLevels(c.audio)
+    }
     return () => ctrl.current?.abort()
   }, [])
 
@@ -79,7 +83,7 @@ export function Demo() {
                 className="absolute inset-0"
                 fallback={<OrbFallback />}
               >
-                {(on) => <MiniOrb active={on} phase={orbPhase} palette="mono" background="#000000" />}
+                {(on) => <PlexusOrb active={on} phase={orbPhase} background="#000000" />}
               </SceneMount>
             </div>
             <div className={`demo-status ${state.phase !== 'parado' ? 'is-active' : ''}`}>{STATUS[state.phase]}</div>
