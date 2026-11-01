@@ -8,8 +8,12 @@ import SceneCanvas from './SceneCanvas'
 
 export type VoicePhase = 'ouvindo' | 'entendendo' | 'pensando' | 'falando'
 
-const ICE = new THREE.Color('#8fd0ff')
-const DEEP = new THREE.Color('#2f6fa8')
+/** Cores do orbe: azul-gelo (padrão) ou monocromático para a landing preto e branco */
+export const ORB_PALETTES = {
+  ice: { a: '#8fd0ff', b: '#2f6fa8', core: '#cfeaff' },
+  mono: { a: '#ffffff', b: '#5e5e5e', core: '#ffffff' },
+}
+export type OrbPalette = keyof typeof ORB_PALETTES
 const GOLDEN = Math.PI * (3 - Math.sqrt(5))
 
 /** Energia-alvo de cada fase da conversa */
@@ -95,12 +99,15 @@ export function Orb({
   count,
   reduced,
   centered = false,
+  palette = 'ice',
 }: {
   phase: VoicePhase
   count: number
   reduced: boolean
   centered?: boolean
+  palette?: OrbPalette
 }) {
+  const colors = ORB_PALETTES[palette]
   const group = useRef<THREE.Group>(null)
   const shell = useRef<THREE.Points>(null)
   const ringA = useRef<THREE.Group>(null)
@@ -121,10 +128,10 @@ export function Orb({
       uPixelRatio: { value: 1 },
       uMouse: { value: new THREE.Vector3(0, 0, 1) },
       uMouseStrength: { value: 0 },
-      uColorA: { value: ICE.clone() },
-      uColorB: { value: DEEP.clone() },
+      uColorA: { value: new THREE.Color(colors.a) },
+      uColorB: { value: new THREE.Color(colors.b) },
     }),
-    [],
+    [colors],
   )
 
   const ringPoints = useMemo(() => {
@@ -147,7 +154,7 @@ export function Orb({
   }, [])
 
   const tmp = useMemo(() => ({ v: new THREE.Vector3(), q: new THREE.Quaternion() }), [])
-  const coreColor = useMemo(() => new THREE.Color('#cfeaff').multiplyScalar(2.2), [])
+  const coreColor = useMemo(() => new THREE.Color(colors.core).multiplyScalar(2.2), [colors])
   // Desktop: orbe deslocado para a direita do texto; celular: centralizado acima do texto
   const wide = !centered && size.width >= 1024
   const offsetX = wide ? viewport.width * 0.2 : 0
@@ -213,12 +220,12 @@ export function Orb({
 
       <group rotation={[1.18, 0, 0.22]}>
         <group ref={ringA}>
-          <Line points={ringPoints.a} color="#8fd0ff" lineWidth={1.1} dashed dashSize={0.16} gapSize={0.1} transparent opacity={0.55} />
+          <Line points={ringPoints.a} color={colors.a} lineWidth={1.1} dashed dashSize={0.16} gapSize={0.1} transparent opacity={0.55} />
         </group>
       </group>
       <group rotation={[1.32, 0, -0.38]}>
         <group ref={ringB}>
-          <Line points={ringPoints.b} color="#8fd0ff" lineWidth={0.8} dashed dashSize={0.05} gapSize={0.12} transparent opacity={0.35} />
+          <Line points={ringPoints.b} color={colors.a} lineWidth={0.8} dashed dashSize={0.05} gapSize={0.12} transparent opacity={0.35} />
         </group>
       </group>
 
@@ -226,7 +233,7 @@ export function Orb({
         <sphereGeometry args={[0.13, 32, 32]} />
         <meshBasicMaterial color={coreColor} toneMapped={false} />
       </mesh>
-      <Glow color="#8fd0ff" size={2.6} intensity={0.8} materialRef={glow} />
+      <Glow color={colors.a} size={2.6} intensity={0.8} materialRef={glow} />
     </group>
   )
 }
